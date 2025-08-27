@@ -1,9 +1,13 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const bodyparser= require("body-parser")
+const bodyparser= require("body-parser");
+const{userAuth}=require("./middleware/user.auth.middleware")
 const port = 5000;
 app.use(express.json()); 
+
+/// use mthod is used for al
+app.use("/user",userAuth)
 //post request
 const userData = [
   {
@@ -69,9 +73,8 @@ app.get("/user/1", (req, res) => {
 });
 
 
-
 //post request
-app.post("/user", (req, res) => {
+app.post("/user",userAuth,(req, res) => {
  
   const user = req.body;
      console.log(user);
@@ -134,6 +137,10 @@ return res.status(201).send({message: "user Created succesfullly"})
 //         v:v
 //     })
 // })
+
+
+
+
 
 app.listen(port, () => {
   console.log(`App is running on port ${port}   http://localhost:5000/`);
