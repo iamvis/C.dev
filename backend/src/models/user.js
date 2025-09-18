@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const { unique } = require("drizzle-orm/mysql-core");
+
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -17,12 +21,13 @@ const userSchema = new mongoose.Schema(
       //  }
       validate: {
         validator: validator.isEmail,
-        message: "email is inavalid",
+        message: "email is invalid",
       },
     },
     username: {
       type: String,
-      unique: true,
+      unique:true,
+      required:true,
       trim: true,
       minLength: [3, "must have at least 3 char"],
       maxLength: [20, "must have under 30 char"],
@@ -127,4 +132,25 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+///token genration by jwt
+userSchema.methods.getJWT = async function(){
+const user = this;
+const token= await jwt.sign({_id:user._id}, "iosdencfonbsdcojsdc-osocsoksco9sdcssiccsicscs",{
+  expiresIn: '7d'
+ })
+ return token;
+}
+//passowrd hassing
+userSchema.methods.getPasswordHashed = async function(){
+  const user = this
+  const hashPassword= await bcrypt.hash(user.password, 10);
+  return hashPassword;
+}
+
+//passowrd compare
+userSchema.methods.getComparePassword = async function(userInputPassowrd){
+const user=this
+  const checkPassword = await bcrypt.compare(userInputPassowrd,user.password )
+  return checkPassword;
+}
 module.exports = mongoose.model("User", userSchema);
