@@ -8,6 +8,9 @@ const cokieeParser = require("cookie-parser");
 const port = 5000;
 const jwt = require("jsonwebtoken");
 const { userAuth } = require("./middleware/auth.middleware");
+const authRouter = require("./routes/auth");
+const profileRoute = require("./routes/profile");
+const requestRoute = require("./routes/request");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,96 +22,11 @@ app.use(cokieeParser());
 
 ////**********************  NEVER TRUST THER USER REQUEST  ***************************** */
 
-app.post("/signup", async (req, res) => {
-  try {
-    // //validation
-    signupValidator(req);
 
-    //destructuring
-    const { email, password, firstName, lastName, username } = req.body;
-    console.log(email);
 
-    // and save hashed password
-    const user = await User.findOne({ email });
-    if (!user) {
-      const user = new User({
-        email,
-        password,
-        fullName: {
-          firstName,
-          lastName,
-        },
-        username,
-      });
-      //hash the password
-      const hashedPassword = await user.getPasswordHashed();
-      console.log(hashedPassword);
-      user.password = hashedPassword;
-      console.log(user);
 
-      await user.save();
-      res.status(201).send(`user creaed SuccessFully ${user}`);
-    } else {
-      throw new Error("Invalid Creation");
-    }
-  } catch (e) {
-    res.status(400).send(`Error in User Creation  ${e.message}`);
-  }
-});
 
-app.post("/login", async (req, res) => {
-  try {
-    //validation
 
-    signinValidator(req);
-    const { email, password } = req.body;
-
-    //find email in db
-    const user = await User.findOne({ email });
-
-    //if yes
-    if (!user) {
-      throw new Error("Invalid Credentials");
-    }
-    //campare hash password
-    const isValidPassword = await user.getComparePassword(password);
-    if (!isValidPassword) {
-      throw new Error("Invalid Credential");
-    }
-
-    //token gena
-    // const token = jwt.sign(
-    //   { _id: user._id },
-    //   "iosdencfonbsdcojsdc-osocsoksco9sdcssiccsicscs"
-    // );
-    const token = await user.getJWT();
-
-    ///cokkies send
-    console.log(token);
-    res.cookie("token", token);
-
-    //send response
-    res.status(200).send(`user is logged in Succesfully`);
-  } catch (error) {
-    res.status(400).send("Error : " + error.message);
-  }
-});
-
-///profile api
-app.get("/profile", userAuth, async (req, res) => {
-  try {
-    const user = req.user;
-
-    res.status(200).send(`user data succesfully fetched: ${user}`);
-  } catch (error) {
-    res.status(400).send("something went wrong", error.message);
-  }
-});
-
-//sendRequest api
-app.post("/sendRequest", userAuth, async (req, res) => {
-  res.status(200).send(`${req.user.fullName.firstName}  sends u request`);
-});
 
 // app.get("/feed", async (req, res) => {
 //   const email = req.body.email;
@@ -197,6 +115,9 @@ app.post("/sendRequest", userAuth, async (req, res) => {
 //   }
 // });
 
+app.use("/auth",authRouter )
+app.use("/profile", profileRoute)
+app.use("/request", requestRoute)
 connectDB()
   .then(() => {
     console.log("connection is Established to the DATABASE");
